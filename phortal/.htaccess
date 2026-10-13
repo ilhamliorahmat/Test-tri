@@ -1,0 +1,16 @@
+# Phortal Apache Configuration & Security Rules
+
+# Prevent directory browsing
+Options -Indexes
+
+# Protect database files
+<FilesMatch "\.(db|sqlite|sqlite3)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Protect config folder
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^data/ - [F,L]
+</IfModule>

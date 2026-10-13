@@ -1,0 +1,6 @@
+{
+  "name": "Phortal",
+  "description": "Photography Portal — Vanilla PHP & SQLite Gallery Management with Multi-Role Access, Dynamic Resizing & Automated Watermarking.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,454 @@
+<div class="bg-zinc-950 text-zinc-100 min-h-screen flex flex-col font-sans antialiased selection:bg-amber-500 selection:text-zinc-950">
+
+  <!-- Top Bar Navigation Contract -->
+  <header class="border-b border-zinc-800/80 bg-zinc-950/90 backdrop-blur-md sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between gap-8">
+      
+      <!-- Zone 1: Single Element Brand Wordmark -->
+      <a href="/" class="flex items-center gap-3 shrink-0 group">
+        <div class="w-8 h-8 rounded-lg bg-amber-500 flex items-center justify-center font-bold text-zinc-950 text-sm tracking-widest shadow-lg shadow-amber-500/20 group-hover:scale-105 transition-transform">P</div>
+        <span class="text-xl font-bold tracking-tight font-serif text-zinc-100 whitespace-nowrap">Phortal</span>
+      </a>
+
+      <!-- Zone 2: Navigation Links -->
+      <nav class="hidden md:flex items-center gap-6 text-sm font-medium text-zinc-400">
+        <button (click)="setTab('exhibitions')" [class.text-zinc-100]="activeTab() === 'exhibitions'" class="hover:text-zinc-100 transition-colors whitespace-nowrap shrink-0 flex items-center gap-2">
+          Exhibitions
+        </button>
+        <button (click)="showUnlockModal.set(true)" class="hover:text-zinc-100 transition-colors whitespace-nowrap shrink-0 flex items-center gap-2 text-amber-400 font-medium">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+          Enter Access Code
+        </button>
+        <button *ngIf="currentUser() && (currentUser()?.role === 'admin' || currentUser()?.role === 'curator')" (click)="setTab('curator')" [class.text-zinc-100]="activeTab() === 'curator'" class="hover:text-zinc-100 transition-colors whitespace-nowrap shrink-0">
+          Curator Studio
+        </button>
+        <button *ngIf="currentUser() && currentUser()?.role === 'admin'" (click)="setTab('admin')" [class.text-zinc-100]="activeTab() === 'admin'" class="hover:text-zinc-100 transition-colors whitespace-nowrap shrink-0">
+          Admin & Audit Logs
+        </button>
+      </nav>
+
+      <!-- Zone 3: Primary Action / User Profile -->
+      <div class="flex items-center gap-4 shrink-0">
+        <div *ngIf="currentUser(); else loginBtn" class="flex items-center gap-3">
+          <div class="text-right hidden sm:block">
+            <div class="text-xs font-semibold text-zinc-200">{{ currentUser()?.full_name }}</div>
+            <div class="text-[10px] uppercase font-mono text-amber-400 font-medium">{{ currentUser()?.role }}</div>
+          </div>
+          <button (click)="logout()" class="px-3 py-1.5 text-xs font-medium text-zinc-300 hover:text-white bg-zinc-900 hover:bg-zinc-800 border border-zinc-700/60 rounded-lg transition-colors">
+            Sign Out
+          </button>
+        </div>
+        <ng-template #loginBtn>
+          <button (click)="showLoginModal.set(true)" class="px-4 py-2 text-xs font-semibold text-zinc-950 bg-amber-400 hover:bg-amber-300 rounded-lg shadow-lg shadow-amber-400/10 transition-colors whitespace-nowrap">
+            Staff Sign In
+          </button>
+        </ng-template>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- Main Viewport -->
+  <main class="max-w-7xl mx-auto px-6 py-8 flex-1 w-full">
+
+    <!-- TAB 1: EXHIBITIONS EXPLORER -->
+    <section *ngIf="activeTab() === 'exhibitions'" class="space-y-8">
+      <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-zinc-800/80 pb-6">
+        <div>
+          <span class="text-xs font-mono text-amber-400 tracking-wider uppercase">Fine Art Collections</span>
+          <h1 class="text-3xl md:text-4xl font-bold font-serif tracking-tight text-zinc-100 mt-1">Exhibitions Archive</h1>
+          <p class="text-sm text-zinc-400 mt-2 max-w-xl">Curated photography archives. Public collections or private exhibitions unlocked via guest access code.</p>
+        </div>
+        <button (click)="showUnlockModal.set(true)" class="px-4 py-2.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded-lg text-xs font-semibold flex items-center gap-2 transition-colors self-start md:self-auto">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 0121 9z"></path></svg>
+          Unlock Private Gallery
+        </button>
+      </div>
+
+      <!-- Galleries Cards Grid -->
+      <div *ngIf="!activeGallery()" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        @for (g of galleries(); track g.id) {
+          <div (click)="openGallery(g)" class="bg-zinc-900/60 border border-zinc-800/80 rounded-2xl p-6 space-y-4 hover:border-zinc-700 transition-all group flex flex-col justify-between cursor-pointer">
+            <div>
+              <div class="flex items-center justify-between text-xs mb-3">
+                <span class="font-mono text-amber-400 bg-amber-400/10 px-2.5 py-1 rounded-md">{{ g.code }}</span>
+                <span class="text-zinc-500 text-[11px]">{{ g.is_private ? '🔒 Private Code' : '🌐 Public' }}</span>
+              </div>
+              <h3 class="text-xl font-bold font-serif text-zinc-100 group-hover:text-amber-400 transition-colors">{{ g.title }}</h3>
+              <p class="text-xs text-zinc-400 mt-2 line-clamp-2 leading-relaxed">{{ g.description || 'Curated fine art photography series.' }}</p>
+            </div>
+            <div class="pt-4 border-t border-zinc-800/60 flex items-center justify-between text-xs text-zinc-500">
+              <span>{{ g.curator_name || 'Staff Curator' }} · {{ g.photo_count || 0 }} Photos</span>
+              <span class="text-amber-400 font-semibold text-xs group-hover:translate-x-1 transition-transform">Explore →</span>
+            </div>
+          </div>
+        }
+      </div>
+
+      <!-- Active Gallery Detail View -->
+      <div *ngIf="activeGallery()" class="space-y-6 pt-2">
+        <button (click)="closeActiveGallery()" class="text-xs text-zinc-400 hover:text-zinc-100 flex items-center gap-2 transition-colors">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+          Back to All Exhibitions
+        </button>
+
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 bg-zinc-900/60 border border-zinc-800 p-6 md:p-8 rounded-2xl">
+          <div>
+            <div class="flex items-center gap-3">
+              <span class="text-xs font-mono text-amber-400 bg-amber-400/10 px-2.5 py-1 rounded-md">{{ activeGallery()?.code }}</span>
+              <span class="text-xs text-zinc-500">Curated by {{ activeGallery()?.curator_name || 'Staff Curator' }}</span>
+            </div>
+            <h2 class="text-3xl md:text-4xl font-bold font-serif mt-3 text-zinc-100">{{ activeGallery()?.title }}</h2>
+            <p class="text-sm text-zinc-400 mt-2 max-w-2xl leading-relaxed">{{ activeGallery()?.description }}</p>
+          </div>
+          <div class="text-xs text-zinc-400 bg-zinc-950/60 border border-zinc-800/80 p-4 rounded-xl space-y-1 font-mono">
+            <div class="text-zinc-500 uppercase tracking-wider text-[10px]">Anti-Piracy Enforcement</div>
+            <div class="text-amber-400 truncate">Watermark: "{{ activeGallery()?.watermark_text }}"</div>
+            <div class="text-zinc-500">Opacity: {{ activeGallery()?.opacity }}% · Position: {{ activeGallery()?.position }}</div>
+          </div>
+        </div>
+
+        <!-- Photos Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          @for (p of activeGallery()?.photos || []; track p.id) {
+            <div class="bg-zinc-900 border border-zinc-800/80 rounded-xl overflow-hidden group hover:border-zinc-700 transition-all flex flex-col justify-between">
+              <div class="relative overflow-hidden cursor-pointer" (click)="openLightbox(p)">
+                <img [src]="'/api/images/' + p.id + '?w=800&code=' + activeCode()" [alt]="p.title" class="w-full h-64 object-cover select-none pointer-events-auto group-hover:scale-105 transition-transform duration-500" (contextmenu)="$event.preventDefault()">
+                <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
+                  <span class="text-xs font-medium text-zinc-100 flex items-center gap-2">
+                    <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"></path></svg>
+                    Click to Expand High-Res
+                  </span>
+                </div>
+              </div>
+              <div class="p-4 flex items-center justify-between border-t border-zinc-800/80 bg-zinc-950/40">
+                <div>
+                  <h4 class="text-sm font-semibold text-zinc-200 truncate max-w-[200px]">{{ p.title }}</h4>
+                  <div class="text-[10px] font-mono text-zinc-500">{{ p.width }} × {{ p.height }} px · {{ (p.file_size / 1024).toFixed(0) }} KB</div>
+                </div>
+                <button *ngIf="currentUser() && (currentUser()?.role === 'admin' || currentUser()?.role === 'curator')" (click)="deletePhoto(p.id)" class="text-rose-400 hover:text-rose-300 text-xs font-mono">Delete</button>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 2: CURATOR STUDIO -->
+    <section *ngIf="activeTab() === 'curator'" class="space-y-8">
+      <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-zinc-800 pb-6">
+        <div>
+          <span class="text-xs font-mono text-amber-400 tracking-wider uppercase">Exhibition Management</span>
+          <h1 class="text-3xl font-bold font-serif text-zinc-100 mt-1">Curator Studio</h1>
+          <p class="text-sm text-zinc-400 mt-1">Create new galleries, upload original photos directly to server storage, set access codes, and customize text watermarks.</p>
+        </div>
+        <button (click)="showCreateGalleryModal.set(true)" class="px-4 py-2.5 bg-amber-400 hover:bg-amber-300 text-zinc-950 rounded-lg text-xs font-bold transition-colors shadow-lg shadow-amber-400/10 flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+          Create New Gallery
+        </button>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        @for (g of galleries(); track g.id) {
+          <div class="bg-zinc-900/60 border border-zinc-800 rounded-2xl p-6 space-y-6">
+            <div class="flex items-start justify-between">
+              <div>
+                <div class="flex items-center gap-2">
+                  <span class="text-xs font-mono text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded">{{ g.code }}</span>
+                  <span class="text-[11px] text-zinc-500">{{ g.is_private ? 'Private' : 'Public' }}</span>
+                </div>
+                <h3 class="text-xl font-bold font-serif text-zinc-100 mt-2">{{ g.title }}</h3>
+              </div>
+              <button (click)="deleteGallery(g.id)" class="text-rose-400 hover:text-rose-300 text-xs font-mono">Delete Gallery</button>
+            </div>
+
+            <!-- Photo Upload Form -->
+            <div class="p-4 bg-zinc-950 border border-zinc-800/80 rounded-xl space-y-3">
+              <div class="text-xs font-semibold text-zinc-300 uppercase font-mono">Upload Photo to Server Directory</div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <input type="text" [(ngModel)]="uploadTitle" placeholder="Photo Title" class="bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-1.5 text-xs text-zinc-200 focus:outline-none focus:border-amber-400">
+                <input type="file" (change)="onFileSelected($event)" accept="image/*" class="text-xs text-zinc-400 file:mr-2 file:py-1 file:px-2 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-zinc-800 file:text-zinc-200">
+              </div>
+              <button (click)="submitUploadPhoto(g.id)" [disabled]="isUploading()" class="w-full py-2 bg-zinc-800 hover:bg-zinc-700 text-amber-400 border border-zinc-700 rounded-lg text-xs font-semibold transition-colors">
+                {{ isUploading() ? 'Saving Photo...' : 'Upload Photo to Exhibition' }}
+              </button>
+            </div>
+
+            <!-- Watermark Configuration Editor -->
+            <div class="space-y-4 pt-2 border-t border-zinc-800/80">
+              <div class="text-xs font-semibold text-zinc-300 uppercase font-mono">Customizable Automated Watermark</div>
+              <div class="space-y-3">
+                <div>
+                  <label class="text-[11px] text-zinc-400">Watermark Text</label>
+                  <input type="text" [(ngModel)]="wmText" placeholder="e.g. © EXHIBITION CODE" class="w-full mt-1 bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-1.5 text-xs text-zinc-100 focus:outline-none focus:border-amber-400">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                  <div>
+                    <label class="text-[11px] text-zinc-400">Opacity ({{ wmOpacity() }}%)</label>
+                    <input type="range" [(ngModel)]="wmOpacity" min="10" max="100" class="w-full mt-1 accent-amber-400">
+                  </div>
+                  <div>
+                    <label class="text-[11px] text-zinc-400">Position</label>
+                    <select [(ngModel)]="wmPosition" class="w-full mt-1 bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-1.5 text-xs text-zinc-200 focus:outline-none">
+                      <option value="bottom-right">Bottom Right</option>
+                      <option value="bottom-left">Bottom Left</option>
+                      <option value="top-right">Top Right</option>
+                      <option value="center">Center</option>
+                      <option value="tile">Tile Repeater</option>
+                    </select>
+                  </div>
+                </div>
+                <button (click)="saveWatermarkSettings(g.id)" class="px-4 py-2 bg-amber-400 hover:bg-amber-300 text-zinc-950 font-bold rounded-lg text-xs transition-colors">
+                  Save Watermark Config
+                </button>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    </section>
+
+    <!-- TAB 3: ADMIN COMMAND CENTER -->
+    <section *ngIf="activeTab() === 'admin'" class="space-y-8">
+      <div class="border-b border-zinc-800 pb-6">
+        <span class="text-xs font-mono text-amber-400 tracking-wider uppercase">System Governance</span>
+        <h1 class="text-3xl font-bold font-serif text-zinc-100 mt-1">Admin Command Center</h1>
+        <p class="text-sm text-zinc-400 mt-1">Manage staff user roles and review detailed, immutable administrative audit logs tracking system changes.</p>
+      </div>
+
+      <!-- Staff User Management Card -->
+      <div class="bg-zinc-900/60 border border-zinc-800 rounded-2xl p-6 space-y-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <h3 class="text-lg font-bold text-zinc-100">Staff Account Permissions</h3>
+            <p class="text-xs text-zinc-400">Administrators have full control; Curators manage gallery content.</p>
+          </div>
+          <button (click)="showAddUserModal.set(true)" class="px-3.5 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-100 border border-zinc-700 rounded-lg text-xs font-medium transition-colors">
+            Add Staff Account
+          </button>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs text-zinc-300">
+            <thead class="bg-zinc-950 uppercase font-mono text-zinc-500 border-b border-zinc-800">
+              <tr>
+                <th class="p-3">User</th>
+                <th class="p-3">Username</th>
+                <th class="p-3">Role</th>
+                <th class="p-3">Created</th>
+                <th class="p-3 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-zinc-800/60">
+              @for (u of staffUsers(); track u.id) {
+                <tr class="hover:bg-zinc-900/60">
+                  <td class="p-3 font-semibold text-zinc-100">{{ u.full_name }}</td>
+                  <td class="p-3 font-mono text-zinc-400">&#64;{{ u.username }}</td>
+                  <td class="p-3">
+                    <span class="px-2.5 py-1 rounded text-[10px] font-mono" [ngClass]="u.role === 'admin' ? 'bg-amber-400/10 text-amber-400 border border-amber-400/20' : 'bg-zinc-800 text-zinc-300'">
+                      {{ u.role }}
+                    </span>
+                  </td>
+                  <td class="p-3 text-zinc-500 font-mono text-[11px]">{{ u.created_at }}</td>
+                  <td class="p-3 text-right">
+                    <button *ngIf="u.username !== 'admin'" (click)="deleteStaffUser(u.id)" class="text-rose-400 hover:text-rose-300 font-mono">Delete</button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Audit Logs Card -->
+      <div class="bg-zinc-900/60 border border-zinc-800 rounded-2xl p-6 space-y-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h3 class="text-lg font-bold text-zinc-100">Administrative Audit Logs</h3>
+            <p class="text-xs text-zinc-400">Detailed records tracking administrative logins, gallery edits, deletions, and photo uploads.</p>
+          </div>
+          <button (click)="loadAuditLogs()" class="px-3.5 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-lg text-xs font-mono flex items-center gap-2">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+            Refresh Logs
+          </button>
+        </div>
+
+        <div class="overflow-x-auto max-h-96 border border-zinc-800/80 rounded-xl">
+          <table class="w-full text-left text-xs text-zinc-300">
+            <thead class="bg-zinc-950 sticky top-0 uppercase font-mono text-zinc-500 border-b border-zinc-800">
+              <tr>
+                <th class="p-3">Timestamp</th>
+                <th class="p-3">User</th>
+                <th class="p-3">Action</th>
+                <th class="p-3">Target</th>
+                <th class="p-3">IP Address</th>
+                <th class="p-3">Details</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-zinc-800/40 font-mono text-[11px]">
+              @for (log of auditLogs(); track log.id) {
+                <tr class="hover:bg-zinc-900/80">
+                  <td class="p-3 text-zinc-500 whitespace-nowrap">{{ log.created_at }}</td>
+                  <td class="p-3 font-semibold text-amber-400">{{ log.username }}</td>
+                  <td class="p-3 text-zinc-200">{{ log.action }}</td>
+                  <td class="p-3 text-zinc-400">{{ log.target_type }} #{{ log.target_id }}</td>
+                  <td class="p-3 text-zinc-500">{{ log.ip_address }}</td>
+                  <td class="p-3 text-zinc-300 max-w-xs truncate">{{ log.details || '-' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- MODALS -->
+
+  <!-- Guest Access Code Modal -->
+  <div *ngIf="showUnlockModal()" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-zinc-900 border border-zinc-800 w-full max-w-md rounded-2xl p-6 space-y-6 shadow-2xl">
+      <div class="flex justify-between items-center">
+        <h3 class="text-xl font-bold font-serif text-zinc-100">Unlock Private Gallery</h3>
+        <button (click)="showUnlockModal.set(false)" class="text-zinc-500 hover:text-zinc-200">✕</button>
+      </div>
+      <p class="text-xs text-zinc-400">Enter the 6-character access code provided by your curator to view private exhibition archives.</p>
+      
+      <div class="space-y-4">
+        <div>
+          <label class="text-[11px] uppercase font-mono text-zinc-400">Gallery Access Code</label>
+          <input type="text" [(ngModel)]="unlockCodeInput" placeholder="e.g. ARCH2026" class="w-full mt-1 bg-zinc-950 border border-zinc-800 rounded-lg px-4 py-2.5 text-lg font-mono text-amber-400 uppercase tracking-widest focus:outline-none focus:border-amber-400">
+        </div>
+        <div *ngIf="unlockError()" class="text-xs text-rose-400 font-mono">{{ unlockError() }}</div>
+        <button (click)="submitUnlockCode()" class="w-full py-3 bg-amber-400 hover:bg-amber-300 text-zinc-950 font-bold rounded-lg text-sm transition-colors">
+          Unlock Exhibition
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Staff Login Modal -->
+  <div *ngIf="showLoginModal()" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-zinc-900 border border-zinc-800 w-full max-w-md rounded-2xl p-6 space-y-6 shadow-2xl">
+      <div class="flex justify-between items-center">
+        <h3 class="text-xl font-bold font-serif text-zinc-100">Staff Sign In</h3>
+        <button (click)="showLoginModal.set(false)" class="text-zinc-500 hover:text-zinc-200">✕</button>
+      </div>
+
+      <div class="space-y-4">
+        <div>
+          <label class="text-xs text-zinc-400">Username</label>
+          <input type="text" [(ngModel)]="loginUsername" placeholder="admin or curator" class="w-full mt-1 bg-zinc-950 border border-zinc-800 rounded-lg px-4 py-2 text-sm text-zinc-100 focus:outline-none focus:border-amber-400">
+        </div>
+        <div>
+          <label class="text-xs text-zinc-400">Password</label>
+          <input type="password" [(ngModel)]="loginPassword" placeholder="••••••••" class="w-full mt-1 bg-zinc-950 border border-zinc-800 rounded-lg px-4 py-2 text-sm text-zinc-100 focus:outline-none focus:border-amber-400">
+        </div>
+        <div class="p-3 bg-zinc-950/80 border border-zinc-800/80 rounded-lg text-[11px] text-zinc-400 font-mono space-y-1">
+          <div class="text-zinc-500 uppercase tracking-wider text-[10px]">Demo Login Credentials</div>
+          <div class="text-amber-400">Admin: admin / admin123</div>
+          <div class="text-amber-400">Curator: curator / curator123</div>
+        </div>
+        <div *ngIf="loginError()" class="text-xs text-rose-400">{{ loginError() }}</div>
+        <button (click)="submitLogin()" class="w-full py-2.5 bg-amber-400 hover:bg-amber-300 text-zinc-950 font-bold rounded-lg text-sm transition-colors">
+          Sign In
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Create Gallery Modal -->
+  <div *ngIf="showCreateGalleryModal()" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-zinc-900 border border-zinc-800 w-full max-w-lg rounded-2xl p-6 space-y-6 shadow-2xl">
+      <div class="flex justify-between items-center">
+        <h3 class="text-xl font-bold font-serif text-zinc-100">New Exhibition Gallery</h3>
+        <button (click)="showCreateGalleryModal.set(false)" class="text-zinc-500 hover:text-zinc-200">✕</button>
+      </div>
+
+      <div class="space-y-4">
+        <div>
+          <label class="text-xs text-zinc-400">Gallery Title</label>
+          <input type="text" [(ngModel)]="newGalleryTitle" placeholder="e.g. Architectural Form & Monolith" class="w-full mt-1 bg-zinc-950 border border-zinc-800 rounded-lg px-4 py-2 text-sm text-zinc-100 focus:outline-none focus:border-amber-400">
+        </div>
+        <div>
+          <label class="text-xs text-zinc-400">Description</label>
+          <textarea [(ngModel)]="newGalleryDesc" rows="3" placeholder="Curator notes about this exhibition..." class="w-full mt-1 bg-zinc-950 border border-zinc-800 rounded-lg px-4 py-2 text-sm text-zinc-100 focus:outline-none focus:border-amber-400"></textarea>
+        </div>
+        <div>
+          <label class="text-xs text-zinc-400">Unique Access Code</label>
+          <input type="text" [(ngModel)]="newGalleryCode" placeholder="e.g. PORTAL-X88" class="w-full mt-1 bg-zinc-950 border border-zinc-800 rounded-lg px-4 py-2 text-sm font-mono text-amber-400 uppercase tracking-widest focus:outline-none focus:border-amber-400">
+        </div>
+        <div class="flex items-center gap-3 pt-1">
+          <input type="checkbox" [(ngModel)]="newGalleryPrivate" id="ngPrivate" class="w-4 h-4 rounded bg-zinc-950 border-zinc-800 text-amber-400">
+          <label for="ngPrivate" class="text-xs text-zinc-300">Private Gallery (Requires Access Code for Guests)</label>
+        </div>
+        <button (click)="submitCreateGallery()" class="w-full py-2.5 bg-amber-400 hover:bg-amber-300 text-zinc-950 font-bold rounded-lg text-sm transition-colors">
+          Create Exhibition
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add User Modal -->
+  <div *ngIf="showAddUserModal()" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-zinc-900 border border-zinc-800 w-full max-w-md rounded-2xl p-6 space-y-6 shadow-2xl">
+      <div class="flex justify-between items-center">
+        <h3 class="text-xl font-bold font-serif text-zinc-100">Add Staff User Account</h3>
+        <button (click)="showAddUserModal.set(false)" class="text-zinc-500 hover:text-zinc-200">✕</button>
+      </div>
+
+      <div class="space-y-4">
+        <div>
+          <label class="text-xs text-zinc-400">Full Name</label>
+          <input type="text" [(ngModel)]="newStaffName" placeholder="e.g. Sarah Connor" class="w-full mt-1 bg-zinc-950 border border-zinc-800 rounded-lg px-4 py-2 text-sm text-zinc-100 focus:outline-none">
+        </div>
+        <div>
+          <label class="text-xs text-zinc-400">Username</label>
+          <input type="text" [(ngModel)]="newStaffUsername" placeholder="e.g. sarahc" class="w-full mt-1 bg-zinc-950 border border-zinc-800 rounded-lg px-4 py-2 text-sm text-zinc-100 focus:outline-none">
+        </div>
+        <div>
+          <label class="text-xs text-zinc-400">Password</label>
+          <input type="password" [(ngModel)]="newStaffPassword" placeholder="••••••••" class="w-full mt-1 bg-zinc-950 border border-zinc-800 rounded-lg px-4 py-2 text-sm text-zinc-100 focus:outline-none">
+        </div>
+        <div>
+          <label class="text-xs text-zinc-400">Role</label>
+          <select [(ngModel)]="newStaffRole" class="w-full mt-1 bg-zinc-950 border border-zinc-800 rounded-lg px-4 py-2 text-sm text-zinc-200 focus:outline-none">
+            <option value="curator">Curator</option>
+            <option value="admin">Administrator</option>
+          </select>
+        </div>
+        <button (click)="submitAddStaffUser()" class="w-full py-2.5 bg-amber-400 hover:bg-amber-300 text-zinc-950 font-bold rounded-lg text-sm transition-colors">
+          Create Staff Account
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Photo Lightbox Modal -->
+  <div *ngIf="lightboxPhoto()" class="fixed inset-0 bg-black/95 z-50 flex flex-col justify-between p-4 md:p-8">
+    <div class="flex justify-between items-center text-zinc-400">
+      <div>
+        <h4 class="text-lg font-serif font-bold text-zinc-100">{{ lightboxPhoto()?.title }}</h4>
+        <p class="text-xs text-zinc-400">{{ lightboxPhoto()?.caption || 'Fine art exhibition archival print.' }}</p>
+      </div>
+      <button (click)="closeLightbox()" class="px-3.5 py-1.5 bg-zinc-800 text-zinc-200 hover:text-white rounded-lg text-xs font-mono">✕ Close</button>
+    </div>
+    <div class="flex-1 flex items-center justify-center p-4 my-2 overflow-hidden">
+      <img [src]="lightboxPhoto()?.url" [alt]="lightboxPhoto()?.title" class="max-h-[80vh] max-w-full object-contain rounded-lg shadow-2xl border border-zinc-800 select-none pointer-events-auto" (contextmenu)="$event.preventDefault()">
+    </div>
+    <div class="flex justify-between items-center text-xs text-zinc-500 font-mono border-t border-zinc-800/80 pt-3">
+      <span>Dynamic Watermarked Bandwidth-Optimized Stream</span>
+      <span>Phortal Anti-Piracy Protection Active</span>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="border-t border-zinc-800/80 bg-zinc-950 py-6 mt-12 text-center text-xs text-zinc-500">
+    <div class="max-w-7xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div>Phortal — Photography Portal & Gallery Management System</div>
+      <div class="font-mono text-[11px] text-zinc-600">Pure Vanilla PHP + SQLite Architecture</div>
+    </div>
+  </footer>
+
+</div>
